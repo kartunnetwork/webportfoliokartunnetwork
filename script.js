@@ -1,19 +1,113 @@
 const desktop = document.querySelector('#desktop');
+const sitePreloader = document.querySelector('#site-preloader');
+const preloaderFill = sitePreloader.querySelector('.preloader-track i');
+let preloaderFinished = false;
+function finishPreloader() {
+  if (preloaderFinished) return;
+  preloaderFinished = true;
+  sitePreloader.classList.add('finished');
+  window.setTimeout(() => sitePreloader.remove(), 220);
+}
+preloaderFill.addEventListener('animationend', finishPreloader);
+window.setTimeout(finishPreloader, 3300);
 const icons = [...document.querySelectorAll('.desktop-icon')];
+const didYouKnow = document.querySelector('#did-you-know');
+const didYouKnowFact = document.querySelector('#did-you-know-fact');
+const didYouKnowFacts = [
+  'Старые reCAPTCHA показывали слова, которые компьютер не смог разобрать в отсканированных книгах. Пока вы доказывали, что не робот, вы заодно помогали машинам читать архивы.',
+  'В 1947 году инженеры нашли мотылька внутри реле компьютера Harvard Mark II и вклеили его в журнал с подписью «первый реальный случай обнаружения бага».',
+  'Самая первая страница в интернете была инструкцией по использованию самого интернета: что такое Всемирная паутина, как создать сервер и где искать другие страницы.',
+  'В декабре 1992 года инженер отправил с компьютера на телефон сообщение «Merry Christmas». Ответить с телефона тогда было нельзя.',
+  'В 1974 году кассир впервые просканировала упаковку жевательной резинки Wrigley’s. Покупатель сохранил чек, а сама упаковка позже попала в музей.',
+  '«Косынка» помогала освоить перетаскивание объектов, а «Сапёр» — различие между левой и правой кнопками. Игры были замаскированными уроками интерфейса.',
+  'Windows 95 продавалась на тринадцати дискетах. Их нужно было вставлять по очереди. Ошибка на последней превращала установку операционной системы в особенно содержательный вечер.',
+  'Слово «пасхалка» появилось после найденной комнаты. Игрок обнаружил секретную надпись Робинетта, а Atari решила не удалять её. Скрытые сюрпризы предложили называть пасхальными яйцами — вещами, которые приятно искать.'
+];
+let didYouKnowIndex = 0;
+let didYouKnowTimer = null;
+function showNextFact() {
+  didYouKnowFact.textContent = didYouKnowFacts[didYouKnowIndex];
+  didYouKnowIndex = (didYouKnowIndex + 1) % didYouKnowFacts.length;
+}
+showNextFact();
+didYouKnowTimer = window.setInterval(showNextFact, 5000);
+didYouKnow.querySelector('.did-you-know-close').addEventListener('click', () => {
+  didYouKnow.hidden = true;
+  window.clearInterval(didYouKnowTimer);
+});
+const didYouKnowTitle = document.querySelector('#did-you-know-title');
+let factMoveState = null;
+function rectanglesOverlap(a, b, gap = 5) {
+  return a.left < b.right + gap && a.right > b.left - gap && a.top < b.bottom + gap && a.bottom > b.top - gap;
+}
+function factPositionIsFree(left, top) {
+  const candidate = {
+    left,
+    top,
+    right: left + didYouKnow.offsetWidth,
+    bottom: top + didYouKnow.offsetHeight
+  };
+  const obstacles = [
+    ...document.querySelectorAll('.desktop-icon:not(.trashed), .window:not([hidden]), .start-menu:not([hidden])')
+  ].filter(element => element !== didYouKnow && element.offsetParent !== null);
+  return obstacles.every(element => !rectanglesOverlap(candidate, element.getBoundingClientRect()));
+}
+didYouKnowTitle.addEventListener('pointerdown', event => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  const rect = didYouKnow.getBoundingClientRect();
+  didYouKnow.style.right = 'auto';
+  didYouKnow.style.left = `${rect.left}px`;
+  didYouKnow.style.top = `${rect.top}px`;
+  factMoveState = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
+  didYouKnowTitle.setPointerCapture(event.pointerId);
+});
+didYouKnowTitle.addEventListener('pointermove', event => {
+  if (!factMoveState || event.pointerId !== factMoveState.pointerId) return;
+  const maxLeft = Math.max(0, desktop.clientWidth - didYouKnow.offsetWidth);
+  const maxTop = Math.max(0, desktop.clientHeight - taskbarHeight() - didYouKnow.offsetHeight);
+  const nextLeft = Math.max(0, Math.min(maxLeft, factMoveState.left + event.clientX - factMoveState.x));
+  const nextTop = Math.max(0, Math.min(maxTop, factMoveState.top + event.clientY - factMoveState.y));
+  if (factPositionIsFree(nextLeft, nextTop)) {
+    didYouKnow.style.left = `${nextLeft}px`;
+    didYouKnow.style.top = `${nextTop}px`;
+  }
+});
+function stopFactMove(event) {
+  if (!factMoveState || event.pointerId !== factMoveState.pointerId) return;
+  factMoveState = null;
+}
+didYouKnowTitle.addEventListener('pointerup', stopFactMove);
+didYouKnowTitle.addEventListener('pointercancel', stopFactMove);
+const retroCursor = document.querySelector('#retro-cursor');
+let busyCursorTimer = null;
+document.documentElement.classList.add('custom-cursor-ready');
+document.addEventListener('pointermove', event => {
+  if (event.pointerType === 'touch') return;
+  retroCursor.style.transform = `translate(${event.clientX}px, ${event.clientY}px)`;
+});
+function showBusyCursor(duration = 850) {
+  document.documentElement.classList.add('cursor-busy');
+  clearTimeout(busyCursorTimer);
+  busyCursorTimer = setTimeout(() => document.documentElement.classList.remove('cursor-busy'), duration);
+}
 let drag = null;
 const undoStack = [];
 const recycleEntries = [];
 let recycleSequence = 0;
 const trash = document.querySelector('.recycle-bin');
 let desktopSize = { width: desktop.clientWidth, height: desktop.clientHeight };
+function taskbarHeight() { return document.querySelector('.taskbar')?.offsetHeight || 45; }
+function iconWidth(icon) { return icon?.offsetWidth || 70; }
+function iconHeight(icon) { return icon?.offsetHeight || 70; }
 
 icons.forEach(icon => {
   const x = Number(icon.dataset.x);
   const y = Number(icon.dataset.y);
-  icon.style.left = `${Math.min(desktop.clientWidth - 50, x / 1400 * desktop.clientWidth)}px`;
-  icon.style.top = `${Math.min(desktop.clientHeight - 82, y / 705 * desktop.clientHeight)}px`;
+  icon.style.left = `${Math.max(0, Math.min(desktop.clientWidth - iconWidth(icon), x / 1400 * desktop.clientWidth))}px`;
+  icon.style.top = `${Math.max(0, Math.min(desktop.clientHeight - taskbarHeight() - iconHeight(icon), y / 705 * desktop.clientHeight))}px`;
 });
-ensureTopFolderSpacing();
+arrangeIconsForViewport();
 
 function ensureTopFolderSpacing() {
   const logos = document.querySelector('[data-app="logos-folder"]');
@@ -23,13 +117,77 @@ function ensureTopFolderSpacing() {
   const weddingLeft = parseFloat(wedding.style.left) || 0;
   const logosTop = parseFloat(logos.style.top) || 0;
   const weddingTop = parseFloat(wedding.style.top) || 0;
-  if (Math.abs(logosTop - weddingTop) >= 50 || Math.abs(logosLeft - weddingLeft) >= 68) return;
-  const rightPosition = logosLeft + 68;
-  if (rightPosition <= desktop.clientWidth - 50) wedding.style.left = `${rightPosition}px`;
-  else logos.style.left = `${Math.max(0, weddingLeft - 68)}px`;
+  if (Math.abs(logosTop - weddingTop) >= 70 || Math.abs(logosLeft - weddingLeft) >= 96) return;
+  const rightPosition = logosLeft + 96;
+  if (rightPosition <= desktop.clientWidth - iconWidth(wedding)) wedding.style.left = `${rightPosition}px`;
+  else logos.style.left = `${Math.max(0, weddingLeft - 96)}px`;
+}
+
+function arrangeIconsForViewport() {
+  if (desktop.clientWidth >= 900) {
+    ensureTopFolderSpacing();
+    resolveIconOverlaps();
+    return;
+  }
+  const visibleIcons = icons.filter(icon => !icon.classList.contains('trashed'));
+  const size = 70;
+  const sidePadding = 10;
+  const workHeight = desktop.clientHeight - taskbarHeight();
+  const factBottom = !didYouKnow.hidden ? didYouKnow.getBoundingClientRect().bottom + 14 : 12;
+  const availableTop = Math.max(factBottom, Math.round(workHeight * .2));
+  const availableHeight = Math.max(size, workHeight - availableTop - size - 10);
+  const conceptualColumns = desktop.clientWidth <= 360 ? 4 : 5;
+  const scatter = {
+    'logos-folder': [1, 2], 'wedding-folder': [0, 1], 'welcome-file': [4, 0], 'hh-resume': [4, 2],
+    'misc-folder': [0, 3], 'беханс': [2, 2], 'моск. метро': [2, 3], 'telegram': [4, 3],
+    'mail-menu': [1, 0], 'meme': [1, 4], 'meme2': [3, 5], 'minesweeper': [4, 4], 'recycle': [0, 5]
+  };
+  visibleIcons.forEach((icon, index) => {
+    const key = icon.dataset.app || icon.dataset.file || icon.dataset.name;
+    const point = scatter[key] || [index % 5, Math.floor(index / 5)];
+    const column = conceptualColumns === 5 ? point[0] : Math.round(point[0] / 4 * 3);
+    const left = sidePadding + column / Math.max(1, conceptualColumns - 1) * (desktop.clientWidth - sidePadding * 2 - size);
+    const top = availableTop + point[1] / 5 * availableHeight;
+    icon.style.left = `${left}px`;
+    icon.style.top = `${Math.min(workHeight - size, top)}px`;
+  });
+  resolveIconOverlaps();
+}
+
+function resolveIconOverlaps() {
+  const visibleIcons = icons.filter(icon => !icon.classList.contains('trashed'));
+  const workHeight = desktop.clientHeight - taskbarHeight();
+  const factRect = !didYouKnow.hidden ? didYouKnow.getBoundingClientRect() : null;
+  const placed = [];
+  const gap = 4;
+  const overlapsRect = (a, b) => a.left < b.right + gap && a.right > b.left - gap && a.top < b.bottom + gap && a.bottom > b.top - gap;
+  const isFree = rect => rect.left >= 0 && rect.top >= 0 && rect.right <= desktop.clientWidth && rect.bottom <= workHeight
+    && (!factRect || !overlapsRect(rect, factRect)) && placed.every(other => !overlapsRect(rect, other));
+  visibleIcons.forEach(icon => {
+    const width = iconWidth(icon);
+    const height = iconHeight(icon);
+    const desiredLeft = Math.max(0, Math.min(desktop.clientWidth - width, parseFloat(icon.style.left) || 0));
+    const desiredTop = Math.max(0, Math.min(workHeight - height, parseFloat(icon.style.top) || 0));
+    let chosen = { left: desiredLeft, top: desiredTop, right: desiredLeft + width, bottom: desiredTop + height };
+    if (!isFree(chosen)) {
+      const candidates = [];
+      for (let top = 4; top <= workHeight - height; top += height + gap) {
+        for (let left = 4; left <= desktop.clientWidth - width; left += width + gap) {
+          const rect = { left, top, right: left + width, bottom: top + height };
+          if (isFree(rect)) candidates.push({ rect, distance: (left - desiredLeft) ** 2 + (top - desiredTop) ** 2 });
+        }
+      }
+      candidates.sort((a, b) => a.distance - b.distance);
+      if (candidates[0]) chosen = candidates[0].rect;
+    }
+    icon.style.left = `${chosen.left}px`;
+    icon.style.top = `${chosen.top}px`;
+    placed.push(chosen);
+  });
 }
 
 function openDesktopApp(icon) {
+  if (icon.dataset.app !== 'mail-menu') showBusyCursor();
   if (icon.dataset.app === 'minesweeper') openMinesweeper();
   if (icon.dataset.app === 'meme') openMemeViewer();
   if (icon.dataset.app === 'wedding-folder') openWeddingFolder();
@@ -38,19 +196,28 @@ function openDesktopApp(icon) {
   if (icon.dataset.app === 'meme2') openMeme2Viewer();
   if (icon.dataset.app === 'misc-folder') openMiscFolder();
   if (icon.dataset.app === 'mail-menu') toggleMailMenu(icon);
+  if (icon.dataset.app === 'welcome-file') openWelcomeFile();
+  if (icon.dataset.app === 'hh-resume') openResumeFile();
 }
 
-function selectIcon(icon) {
-  icons.forEach(item => item.classList.toggle('selected', item === icon));
+function selectIcon(icon, additive = false) {
+  if (!additive) icons.forEach(item => item.classList.remove('selected'));
+  if (icon) icon.classList.add('selected');
 }
 
 icons.forEach(icon => {
   icon.addEventListener('pointerdown', event => {
     if (event.button !== 0) return;
     event.preventDefault();
-    selectIcon(icon);
-    const rect = icon.getBoundingClientRect();
-    drag = { icon, startX: event.clientX, startY: event.clientY, left: rect.left, top: rect.top, moved: false };
+    if (event.ctrlKey || event.metaKey) icon.classList.toggle('selected');
+    else if (!icon.classList.contains('selected')) selectIcon(icon);
+    if (!icon.classList.contains('selected')) return;
+    const group = icons.filter(item => item.classList.contains('selected') && !item.classList.contains('trashed'));
+    const positions = group.map(item => {
+      const rect = item.getBoundingClientRect();
+      return { item, left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+    });
+    drag = { icon, startX: event.clientX, startY: event.clientY, positions, moved: false };
     icon.setPointerCapture(event.pointerId);
   });
 
@@ -60,9 +227,17 @@ icons.forEach(icon => {
     const dy = event.clientY - drag.startY;
     if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
     if (!drag.moved) return;
-    icon.classList.add('dragging');
-    icon.style.left = `${Math.max(0, Math.min(desktop.clientWidth - 50, drag.left + dx))}px`;
-    icon.style.top = `${Math.max(0, Math.min(desktop.clientHeight - 82, drag.top + dy))}px`;
+    const minLeft = Math.min(...drag.positions.map(position => position.left));
+    const minTop = Math.min(...drag.positions.map(position => position.top));
+    const maxRight = Math.max(...drag.positions.map(position => position.left + position.width));
+    const maxBottom = Math.max(...drag.positions.map(position => position.top + position.height));
+    const safeDx = Math.max(-minLeft, Math.min(desktop.clientWidth - maxRight, dx));
+    const safeDy = Math.max(-minTop, Math.min(desktop.clientHeight - taskbarHeight() - maxBottom, dy));
+    drag.positions.forEach(position => {
+      position.item.classList.add('dragging');
+      position.item.style.left = `${position.left + safeDx}px`;
+      position.item.style.top = `${position.top + safeDy}px`;
+    });
     if (icon !== trash) icon.classList.toggle('over-trash', overlaps(icon, trash));
   });
 
@@ -71,18 +246,21 @@ icons.forEach(icon => {
     const wasMoved = drag.moved;
     const shouldOpen = !drag.moved && icon.matches('a.external');
     const shouldTrash = drag.moved && icon !== trash && overlaps(icon, trash);
-    icon.classList.remove('dragging');
+    drag.positions.forEach(position => position.item.classList.remove('dragging'));
     icon.classList.remove('over-trash');
     if (shouldTrash) {
-      const entry = { id: ++recycleSequence, type: 'desktop', icon, left: drag.left, top: drag.top, name: icon.dataset.name, imgSrc: icon.querySelector('img')?.src };
+      const original = drag.positions.find(position => position.item === icon);
+      const entry = { id: ++recycleSequence, type: 'desktop', icon, left: original.left, top: original.top, name: icon.dataset.name, imgSrc: icon.querySelector('img')?.src };
       undoStack.push(entry);
       recycleEntries.push(entry);
       icon.classList.add('trashed');
+      arrangeIconsForViewport();
       renderRecycleBin();
       showToast(`${icon.dataset.name} перемещён в корзину · Ctrl+Z — вернуть`);
     }
     drag = null;
     if (shouldOpen) {
+      showBusyCursor();
       if (icon.href.startsWith('mailto:')) window.location.href = icon.href;
       else window.open(icon.href, '_blank', 'noopener');
     }
@@ -145,19 +323,126 @@ document.addEventListener('keydown', event => {
 window.addEventListener('resize', () => {
   const next = { width: desktop.clientWidth, height: desktop.clientHeight };
   icons.filter(icon => !icon.classList.contains('trashed')).forEach(icon => {
-    icon.style.left = `${Math.min(next.width - 50, parseFloat(icon.style.left) / desktopSize.width * next.width)}px`;
-    icon.style.top = `${Math.min(next.height - 82, parseFloat(icon.style.top) / desktopSize.height * next.height)}px`;
+    icon.style.left = `${Math.max(0, Math.min(next.width - iconWidth(icon), parseFloat(icon.style.left) / desktopSize.width * next.width))}px`;
+    icon.style.top = `${Math.max(0, Math.min(next.height - taskbarHeight() - iconHeight(icon), parseFloat(icon.style.top) / desktopSize.height * next.height))}px`;
   });
-  ensureTopFolderSpacing();
+  arrangeIconsForViewport();
   desktopSize = next;
 });
 
+const selectionMarquee = document.createElement('div');
+selectionMarquee.className = 'selection-marquee';
+desktop.append(selectionMarquee);
+let marqueeState = null;
 desktop.addEventListener('pointerdown', event => {
-  if (event.target === desktop) selectIcon(null);
+  if (event.target !== desktop || event.button !== 0 || event.pointerType === 'touch') return;
+  event.preventDefault();
+  const desktopRect = desktop.getBoundingClientRect();
+  const startX = Math.max(0, Math.min(desktop.clientWidth, event.clientX - desktopRect.left));
+  const startY = Math.max(0, Math.min(desktop.clientHeight - taskbarHeight(), event.clientY - desktopRect.top));
+  marqueeState = { pointerId: event.pointerId, startX, startY };
+  selectIcon(null);
+  Object.assign(selectionMarquee.style, { left: `${startX}px`, top: `${startY}px`, width: '0px', height: '0px' });
+  selectionMarquee.classList.add('active');
+  desktop.setPointerCapture(event.pointerId);
 });
+desktop.addEventListener('pointermove', event => {
+  if (!marqueeState || event.pointerId !== marqueeState.pointerId) return;
+  const desktopRect = desktop.getBoundingClientRect();
+  const currentX = Math.max(0, Math.min(desktop.clientWidth, event.clientX - desktopRect.left));
+  const currentY = Math.max(0, Math.min(desktop.clientHeight - taskbarHeight(), event.clientY - desktopRect.top));
+  const left = Math.min(marqueeState.startX, currentX);
+  const top = Math.min(marqueeState.startY, currentY);
+  const right = Math.max(marqueeState.startX, currentX);
+  const bottom = Math.max(marqueeState.startY, currentY);
+  Object.assign(selectionMarquee.style, { left: `${left}px`, top: `${top}px`, width: `${right - left}px`, height: `${bottom - top}px` });
+  icons.forEach(icon => {
+    if (icon.classList.contains('trashed')) return icon.classList.remove('selected');
+    const rect = icon.getBoundingClientRect();
+    icon.classList.toggle('selected', rect.left < right && rect.right > left && rect.top < bottom && rect.bottom > top);
+  });
+});
+function stopMarquee(event) {
+  if (!marqueeState || event.pointerId !== marqueeState.pointerId) return;
+  marqueeState = null;
+  selectionMarquee.classList.remove('active');
+}
+desktop.addEventListener('pointerup', stopMarquee);
+desktop.addEventListener('pointercancel', stopMarquee);
 
 const startButton = document.querySelector('.start-button');
-startButton.addEventListener('click', () => startButton.classList.toggle('active'));
+const startMenu = document.querySelector('#start-menu');
+const shutdownBackdrop = document.querySelector('#shutdown-backdrop');
+const powerScreen = document.querySelector('#power-screen');
+const shutdownTrigger = document.querySelector('#shutdown-trigger');
+const shutdownYes = document.querySelector('#shutdown-yes');
+const shutdownNo = document.querySelector('#shutdown-no');
+const bootVideo = document.querySelector('#boot-video');
+let powerSequenceTimer = null;
+
+function closeStartMenu() { startMenu.hidden = true; startButton.classList.remove('active'); }
+startButton.addEventListener('click', event => {
+  event.stopPropagation();
+  const shouldOpen = startMenu.hidden;
+  startMenu.hidden = !shouldOpen;
+  startButton.classList.toggle('active', shouldOpen);
+});
+startMenu.addEventListener('pointerdown', event => event.stopPropagation());
+startMenu.addEventListener('click', event => {
+  const item = event.target.closest('[data-start-app], [data-start-url], [data-start-file], [data-start-widget]');
+  if (!item) return;
+  closeStartMenu();
+  if (item.dataset.startWidget === 'facts') {
+    didYouKnow.hidden = false;
+    window.clearInterval(didYouKnowTimer);
+    didYouKnowTimer = window.setInterval(showNextFact, 5000);
+    arrangeIconsForViewport();
+    return;
+  }
+  if (item.dataset.startFile) {
+    const fileIcon = document.querySelector(`.desktop-icon[data-file="${item.dataset.startFile}"]`);
+    if (fileIcon) selectIcon(fileIcon);
+    return;
+  }
+  if (item.dataset.startUrl) {
+    showBusyCursor();
+    window.open(item.dataset.startUrl, '_blank', 'noopener');
+    return;
+  }
+  const icon = document.querySelector(`.desktop-icon[data-app="${item.dataset.startApp}"]`);
+  if (icon) openDesktopApp(icon);
+});
+document.addEventListener('pointerdown', event => { if (!event.target.closest('#start-menu') && !event.target.closest('.start-button')) closeStartMenu(); });
+
+function closeShutdownDialog() { shutdownBackdrop.hidden = true; }
+shutdownTrigger.addEventListener('click', () => {
+  closeStartMenu();
+  shutdownBackdrop.hidden = false;
+  shutdownBackdrop.querySelector('input[value="shutdown"]').focus();
+});
+shutdownNo.addEventListener('click', closeShutdownDialog);
+document.querySelector('.shutdown-close').addEventListener('click', closeShutdownDialog);
+
+function showBootThenReload() {
+  powerScreen.dataset.stage = 'boot';
+  bootVideo.currentTime = 0;
+  bootVideo.play().catch(() => {});
+  clearTimeout(powerSequenceTimer);
+  powerSequenceTimer = setTimeout(() => window.location.reload(), 15000);
+}
+bootVideo.addEventListener('ended', () => window.location.reload());
+shutdownYes.addEventListener('click', () => {
+  const action = shutdownBackdrop.querySelector('input[name="power-action"]:checked').value;
+  closeShutdownDialog();
+  powerScreen.hidden = false;
+  powerScreen.dataset.stage = 'shutdown';
+  clearTimeout(powerSequenceTimer);
+  if (action === 'restart') powerSequenceTimer = setTimeout(showBootThenReload, 750);
+  else powerSequenceTimer = setTimeout(() => { powerScreen.dataset.stage = 'off'; }, 900);
+});
+powerScreen.addEventListener('click', () => {
+  if (powerScreen.dataset.stage === 'off') showBootThenReload();
+});
 
 const mailChoiceMenu = document.querySelector('#mail-choice-menu');
 const contactEmail = 'dariakart9@gmail.com';
@@ -166,8 +451,8 @@ function toggleMailMenu(icon) {
   mailChoiceMenu.hidden = !shouldOpen;
   if (!shouldOpen) return;
   const rect = icon.getBoundingClientRect();
-  mailChoiceMenu.style.left = `${Math.max(4, Math.min(rect.left, desktop.clientWidth - 200))}px`;
-  mailChoiceMenu.style.top = `${Math.max(4, Math.min(rect.bottom + 4, desktop.clientHeight - 112))}px`;
+  mailChoiceMenu.style.left = `${Math.max(4, Math.min(rect.left, desktop.clientWidth - mailChoiceMenu.offsetWidth - 4))}px`;
+  mailChoiceMenu.style.top = `${Math.max(4, Math.min(rect.bottom + 4, desktop.clientHeight - taskbarHeight() - mailChoiceMenu.offsetHeight - 4))}px`;
 }
 mailChoiceMenu.addEventListener('click', async event => {
   const action = event.target.closest('button')?.dataset.mailAction;
@@ -213,6 +498,37 @@ function closeBannerViewer() { bannerWindow.hidden = true; bannerTask.hidden = t
 document.querySelector('.banner-close').addEventListener('click', closeBannerViewer);
 bannerTask.addEventListener('click', () => { bannerWindow.hidden = !bannerWindow.hidden; });
 
+const welcomeWindow = document.querySelector('#welcome-window');
+const welcomeTask = document.querySelector('#welcome-task');
+function openWelcomeFile() {
+  welcomeWindow.hidden = false;
+  welcomeTask.hidden = false;
+  fitWindowToDesktop(welcomeWindow);
+  welcomeWindow.querySelector('.welcome-canvas').scrollTop = 0;
+  welcomeWindow.querySelector('.welcome-open-list').scrollTop = 0;
+}
+function closeWelcomeFile() { welcomeWindow.hidden = true; welcomeTask.hidden = true; }
+document.querySelector('.welcome-close').addEventListener('click', closeWelcomeFile);
+welcomeTask.addEventListener('click', () => { if (welcomeWindow.hidden) openWelcomeFile(); else welcomeWindow.hidden = true; });
+openWelcomeFile();
+showBusyCursor(1100);
+
+const resumeWindow = document.querySelector('#resume-window');
+const resumeTask = document.querySelector('#hh-resume-task');
+function fitResumeWindow() {
+  resumeWindow.style.width = `${Math.min(760, desktop.clientWidth - 8)}px`;
+  resumeWindow.style.height = `${Math.min(650, desktop.clientHeight - taskbarHeight() - 8)}px`;
+  fitWindowToDesktop(resumeWindow);
+}
+function openResumeFile() {
+  resumeWindow.hidden = false;
+  resumeTask.hidden = false;
+  fitResumeWindow();
+}
+function closeResumeFile() { resumeWindow.hidden = true; resumeTask.hidden = true; }
+document.querySelector('.resume-close').addEventListener('click', closeResumeFile);
+resumeTask.addEventListener('click', () => { if (resumeWindow.hidden) openResumeFile(); else resumeWindow.hidden = true; });
+
 const folderWindow = document.querySelector('#folder-window');
 const folderTask = document.querySelector('#folder-task');
 const folderBoard = document.querySelector('#folder-whiteboard');
@@ -229,7 +545,7 @@ folderBoard.addEventListener('pointerdown', event => {
 });
 folderBoard.addEventListener('dblclick', event => {
   const item = event.target.closest('.folder-item[data-url]');
-  if (item) window.open(item.dataset.url, '_blank', 'noopener,noreferrer');
+  if (item) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
 });
 folderBoard.querySelectorAll('.folder-item').forEach(item => {
   let itemDrag = null;
@@ -313,7 +629,7 @@ logosBoard.addEventListener('pointerdown', event => {
 });
 logosBoard.addEventListener('dblclick', event => {
   const item = event.target.closest('.folder-item[data-url]');
-  if (item) window.open(item.dataset.url, '_blank', 'noopener,noreferrer');
+  if (item) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
 });
 logosBoard.querySelectorAll('.folder-item').forEach(item => {
   let logoDrag = null;
@@ -365,8 +681,8 @@ miscBoard.addEventListener('pointerdown', event => {
 });
 miscBoard.addEventListener('dblclick', event => {
   const item = event.target.closest('.folder-item');
-  if (item?.dataset.url) window.open(item.dataset.url, '_blank', 'noopener,noreferrer');
-  if (item?.dataset.app === 'banner-viewer') openBannerViewer();
+  if (item?.dataset.url) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
+  if (item?.dataset.app === 'banner-viewer') { showBusyCursor(); openBannerViewer(); }
 });
 miscBoard.querySelectorAll('.folder-item').forEach(item => {
   let miscDrag = null;
@@ -437,8 +753,8 @@ recycleBoard.addEventListener('contextmenu', event => {
   const item = event.target.closest('.recycle-item'); if (!item) return;
   event.preventDefault(); selectRecycleItem(item);
   recycleContext.hidden = false;
-  recycleContext.style.left = `${Math.min(event.clientX, desktop.clientWidth - 132)}px`;
-  recycleContext.style.top = `${Math.min(event.clientY, desktop.clientHeight - 100)}px`;
+  recycleContext.style.left = `${Math.min(event.clientX, desktop.clientWidth - recycleContext.offsetWidth - 4)}px`;
+  recycleContext.style.top = `${Math.min(event.clientY, desktop.clientHeight - taskbarHeight() - recycleContext.offsetHeight - 4)}px`;
 });
 document.addEventListener('pointerdown', event => { if (!event.target.closest('#recycle-context')) recycleContext.hidden = true; });
 recycleContext.addEventListener('click', event => {
@@ -463,10 +779,11 @@ function restoreRecycleEntry(entry) {
     miscBoard.insertBefore(entry.item, miscBoard.children[entry.index] || null);
     miscBoard.querySelectorAll('.folder-item').forEach(el => el.classList.toggle('selected', el === entry.item));
   } else {
-    entry.icon.style.left = `${Math.min(desktop.clientWidth - 50, entry.left)}px`;
-    entry.icon.style.top = `${Math.min(desktop.clientHeight - 82, entry.top)}px`;
+    entry.icon.style.left = `${Math.max(0, Math.min(desktop.clientWidth - iconWidth(entry.icon), entry.left))}px`;
+    entry.icon.style.top = `${Math.max(0, Math.min(desktop.clientHeight - taskbarHeight() - iconHeight(entry.icon), entry.top))}px`;
     entry.icon.classList.remove('trashed');
     selectIcon(entry.icon);
+    arrangeIconsForViewport();
   }
   const recycleIndex = recycleEntries.indexOf(entry); if (recycleIndex >= 0) recycleEntries.splice(recycleIndex, 1);
   const folderIndex = folderUndo.indexOf(entry); if (folderIndex >= 0) folderUndo.splice(folderIndex, 1);
@@ -479,7 +796,7 @@ function restoreRecycleEntry(entry) {
 
 function fitWindowToDesktop(win) {
   const workWidth = desktop.clientWidth;
-  const workHeight = desktop.clientHeight - 32;
+  const workHeight = desktop.clientHeight - taskbarHeight();
   const rect = win.getBoundingClientRect();
   const width = Math.min(rect.width, workWidth - 8);
   const height = Math.min(rect.height, workHeight - 8);
@@ -489,6 +806,41 @@ function fitWindowToDesktop(win) {
   win.style.left = `${Math.max(4, (workWidth - width) / 2)}px`;
   win.style.top = `${Math.max(4, (workHeight - height) / 2)}px`;
 }
+
+const movableWindows = [...document.querySelectorAll('.window')];
+function bringWindowToFront(activeWindow) {
+  movableWindows.forEach(win => { win.style.zIndex = win === activeWindow ? '11' : '10'; });
+}
+movableWindows.forEach(win => {
+  const titlebar = win.querySelector('.window-titlebar');
+  if (!titlebar) return;
+  let moveState = null;
+  win.addEventListener('pointerdown', () => bringWindowToFront(win));
+  titlebar.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || event.target.closest('button')) return;
+    event.preventDefault();
+    bringWindowToFront(win);
+    const rect = win.getBoundingClientRect();
+    win.style.transform = 'none';
+    win.style.left = `${rect.left}px`;
+    win.style.top = `${rect.top}px`;
+    moveState = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
+    titlebar.setPointerCapture(event.pointerId);
+  });
+  titlebar.addEventListener('pointermove', event => {
+    if (!moveState || event.pointerId !== moveState.pointerId) return;
+    const maxLeft = Math.max(0, desktop.clientWidth - win.offsetWidth);
+    const maxTop = Math.max(0, desktop.clientHeight - taskbarHeight() - win.offsetHeight);
+    win.style.left = `${Math.max(0, Math.min(maxLeft, moveState.left + event.clientX - moveState.x))}px`;
+    win.style.top = `${Math.max(0, Math.min(maxTop, moveState.top + event.clientY - moveState.y))}px`;
+  });
+  const stopMoving = event => {
+    if (!moveState || event.pointerId !== moveState.pointerId) return;
+    moveState = null;
+  };
+  titlebar.addEventListener('pointerup', stopMoving);
+  titlebar.addEventListener('pointercancel', stopMoving);
+});
 
 document.querySelectorAll('.window:not(.mines-window)').forEach(win => {
   const handle = document.createElement('div');
@@ -513,7 +865,7 @@ document.querySelectorAll('.window:not(.mines-window)').forEach(win => {
     const left = parseFloat(win.style.left);
     const top = parseFloat(win.style.top);
     const maxWidth = desktop.clientWidth - left - 4;
-    const maxHeight = desktop.clientHeight - 32 - top - 4;
+    const maxHeight = desktop.clientHeight - taskbarHeight() - top - 4;
     const minWidth = Math.min(240, maxWidth);
     const minHeight = Math.min(180, maxHeight);
     win.style.width = `${Math.max(minWidth, Math.min(maxWidth, resizeState.width + event.clientX - resizeState.x))}px`;
@@ -521,7 +873,11 @@ document.querySelectorAll('.window:not(.mines-window)').forEach(win => {
   });
   handle.addEventListener('pointerup', () => { resizeState = null; });
 });
-window.addEventListener('resize', () => { if (!imageWindow.hidden) fitWindowToDesktop(imageWindow); });
+window.addEventListener('resize', () => {
+  if (!imageWindow.hidden) fitWindowToDesktop(imageWindow);
+  if (!welcomeWindow.hidden) fitWindowToDesktop(welcomeWindow);
+  if (!resumeWindow.hidden) fitResumeWindow();
+});
 
 const minesWindow = document.querySelector('#mines-window');
 const mineTask = document.querySelector('#mine-task');
@@ -578,15 +934,24 @@ function updateLevelChecks() {
 
 function newMineGame() {
   const config = levels[currentLevel];
+  const cellSize = 31;
   clearInterval(mineTimer); seconds = 0; document.querySelector('#mine-time').textContent = '000';
   mineTimer = null; firstMove = true; mineReset.dataset.face = 'normal';
   mineState = Array.from({length:config.rows * config.cols}, () => ({mine:false, open:false, flag:false}));
-  mineBoard.style.gridTemplateColumns = `repeat(${config.cols}, 22px)`;
-  minesWindow.style.width = `${config.cols * 22 + 22}px`;
+  mineBoard.style.gridTemplateColumns = `repeat(${config.cols}, ${cellSize}px)`;
+  minesWindow.style.width = `${config.cols * cellSize + 31}px`;
   mineBoard.replaceChildren(...mineState.map((cell, i) => {
     const button = document.createElement('button'); button.className = 'mine-cell'; button.type = 'button'; button.dataset.i = i;
     button.addEventListener('click', () => openCell(i));
-    button.addEventListener('contextmenu', e => { e.preventDefault(); if (!cell.open) { cell.flag = !cell.flag; button.textContent = cell.flag ? '🚩' : ''; updateMineCount(); } });
+    button.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (!cell.open) {
+        cell.flag = !cell.flag;
+        button.textContent = '';
+        button.classList.toggle('flagged', cell.flag);
+        updateMineCount();
+      }
+    });
     return button;
   }));
   updateMineCount();
@@ -614,7 +979,11 @@ function openCell(i) {
   if (firstMove) { placeMines(i); firstMove = false; }
   if (!mineTimer) mineTimer=setInterval(()=>{ seconds++; document.querySelector('#mine-time').textContent=String(Math.min(999,seconds)).padStart(3,'0'); },1000);
   cell.open=true; const el=mineBoard.children[i]; el.classList.add('open');
-  if(cell.mine){ el.textContent='✹'; mineReset.dataset.face='normal'; clearInterval(mineTimer); mineState.forEach((v,n)=>{if(v.mine)mineBoard.children[n].textContent='✹';}); return; }
+  if(cell.mine){
+    el.textContent=''; el.classList.add('mine'); mineReset.dataset.face='normal'; clearInterval(mineTimer);
+    mineState.forEach((v,n)=>{ if(v.mine){ mineBoard.children[n].textContent=''; mineBoard.children[n].classList.add('mine'); } });
+    return;
+  }
   const n=neighbors(i).filter(j=>mineState[j].mine).length; el.dataset.n=n; el.textContent=n||''; if(!n)neighbors(i).forEach(openCell);
   if(mineState.filter(v=>!v.mine).every(v=>v.open)){mineReset.dataset.face='cool';clearInterval(mineTimer);}
 }
