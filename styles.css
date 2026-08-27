@@ -79,7 +79,7 @@ button, a { font: inherit; }
 .did-you-know {
   position: absolute; z-index: 6; top: 18px; right: 20px; width: min(400px, calc(100vw - 40px));
   min-height: 88px; padding: 13px 38px 13px 16px; color: #000; background: #ffffdf;
-  box-shadow: inset 1px 1px #fff, inset -1px -1px #000, inset -2px -2px #818181, 2px 2px 0 rgba(0,0,0,.2);
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #000, inset -2px -2px #818181, 2px 2px 0 rgba(0,0,0,.2); touch-action: none;
 }
 .did-you-know[hidden] { display: none; }
 .did-you-know strong { display: block; margin-bottom: 7px; color: #000080; font-size: 17px; line-height: 18px; touch-action: none; }

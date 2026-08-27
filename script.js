@@ -59,17 +59,17 @@ function factPositionIsFree(left, top) {
   ].filter(element => element !== didYouKnow && element.offsetParent !== null);
   return obstacles.every(element => !rectanglesOverlap(candidate, element.getBoundingClientRect()));
 }
-didYouKnowTitle.addEventListener('pointerdown', event => {
-  if (event.button !== 0) return;
+didYouKnow.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || event.target.closest('.did-you-know-close')) return;
   event.preventDefault();
   const rect = didYouKnow.getBoundingClientRect();
   didYouKnow.style.right = 'auto';
   didYouKnow.style.left = `${rect.left}px`;
   didYouKnow.style.top = `${rect.top}px`;
   factMoveState = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
-  didYouKnowTitle.setPointerCapture(event.pointerId);
+  didYouKnow.setPointerCapture(event.pointerId);
 });
-didYouKnowTitle.addEventListener('pointermove', event => {
+didYouKnow.addEventListener('pointermove', event => {
   if (!factMoveState || event.pointerId !== factMoveState.pointerId) return;
   const maxLeft = Math.max(0, desktop.clientWidth - didYouKnow.offsetWidth);
   const maxTop = Math.max(0, desktop.clientHeight - taskbarHeight() - didYouKnow.offsetHeight);
@@ -84,8 +84,8 @@ function stopFactMove(event) {
   if (!factMoveState || event.pointerId !== factMoveState.pointerId) return;
   factMoveState = null;
 }
-didYouKnowTitle.addEventListener('pointerup', stopFactMove);
-didYouKnowTitle.addEventListener('pointercancel', stopFactMove);
+didYouKnow.addEventListener('pointerup', stopFactMove);
+didYouKnow.addEventListener('pointercancel', stopFactMove);
 const retroCursor = document.querySelector('#retro-cursor');
 let busyCursorTimer = null;
 document.documentElement.classList.add('custom-cursor-ready');
@@ -205,6 +205,13 @@ function openDesktopApp(icon) {
   if (icon.dataset.app === 'mail-menu') toggleMailMenu(icon);
   if (icon.dataset.app === 'welcome-file') openWelcomeFile();
   if (icon.dataset.app === 'hh-resume') openResumeFile();
+  const windowSelector = {
+    minesweeper: '#mines-window', meme: '#image-window', 'wedding-folder': '#folder-window',
+    recycle: '#recycle-window', 'logos-folder': '#logos-window', meme2: '#meme2-window',
+    'misc-folder': '#misc-window', 'welcome-file': '#welcome-window', 'hh-resume': '#resume-window'
+  }[icon.dataset.app];
+  const openedWindow = windowSelector ? document.querySelector(windowSelector) : null;
+  if (openedWindow && !openedWindow.hidden) bringWindowToFront(openedWindow);
 }
 
 function selectIcon(icon, additive = false) {
@@ -831,8 +838,10 @@ function fitWindowToDesktop(win) {
 }
 
 const movableWindows = [...document.querySelectorAll('.window')];
+let topWindowZ = 10;
 function bringWindowToFront(activeWindow) {
-  movableWindows.forEach(win => { win.style.zIndex = win === activeWindow ? '11' : '10'; });
+  topWindowZ += 1;
+  activeWindow.style.zIndex = String(topWindowZ);
 }
 movableWindows.forEach(win => {
   const titlebar = win.querySelector('.window-titlebar');
@@ -864,6 +873,13 @@ movableWindows.forEach(win => {
   titlebar.addEventListener('pointerup', stopMoving);
   titlebar.addEventListener('pointercancel', stopMoving);
 });
+
+const windowVisibilityObserver = new MutationObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.target.hidden) bringWindowToFront(entry.target);
+  });
+});
+movableWindows.forEach(win => windowVisibilityObserver.observe(win, { attributes: true, attributeFilter: ['hidden'] }));
 
 document.querySelectorAll('.window:not(.mines-window)').forEach(win => {
   const handle = document.createElement('div');
