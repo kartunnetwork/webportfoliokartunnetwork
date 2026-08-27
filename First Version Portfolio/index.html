@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Рабочий стол — резюме</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="desktop" id="desktop" aria-label="Рабочий стол">
+    <button class="desktop-icon" style="--x:11px;--y:33px" data-name="logos" data-x="11" data-y="33" data-app="logos-folder">
+      <img src="assets/folder-alt.png" alt=""><span>logos</span>
+    </button>
+    <button class="desktop-icon" style="--x:85px;--y:33px" data-name="для свад." data-x="85" data-y="33" data-app="wedding-folder">
+      <img src="assets/folder-alt.png" alt=""><span>для свад.</span>
+    </button>
+    <button class="desktop-icon" style="--x:11px;--y:83px" data-name="welcome" data-x="11" data-y="83">
+      <img src="assets/folder.png" alt=""><span>welcome</span>
+    </button>
+    <button class="desktop-icon" style="--x:1317px;--y:271px" data-name="разное" data-x="1317" data-y="271" data-app="misc-folder">
+      <img src="assets/paint.png" alt=""><span>разное</span>
+    </button>
+
+    <a class="desktop-icon external" style="--x:11px;--y:300px" href="https://www.behance.net/kartoonnetwork" target="_blank" rel="noopener" data-name="беханс" data-x="11" data-y="300" aria-label="Открыть Behance">
+      <span class="crop behance"><img src="assets/behance.png" alt=""></span><span>беханс</span>
+    </a>
+    <a class="desktop-icon external" style="--x:11px;--y:390px" href="https://moscow-metro-after-us.layero.app/#screen-1" target="_blank" rel="noopener" data-name="моск. метро" data-x="11" data-y="390" aria-label="Открыть сайт Московского метро">
+      <span class="crop ie"><img src="assets/ie.png" alt=""></span><span>моск.<br>метро</span>
+    </a>
+    <a class="desktop-icon external" style="--x:120px;--y:605px" href="https://t.me/kartun_network" target="_blank" rel="noopener" data-name="telegram" data-x="120" data-y="605" aria-label="Открыть Telegram">
+      <img class="telegram" src="assets/telegram.png" alt=""><span>telegram</span>
+    </a>
+
+    <button class="desktop-icon" style="--x:173px;--y:541px" type="button" data-app="mail-menu" data-name="почта" data-x="173" data-y="541" aria-label="Способы написать на dariakart9@gmail.com">
+      <span class="crop mail"><img src="assets/mail.png" alt=""></span><span>почта</span>
+    </button>
+    <button class="desktop-icon" style="--x:1035px;--y:500px" data-name="meme.jpg" data-x="1035" data-y="500" data-app="meme">
+      <img class="meme" src="assets/meme.png" alt=""><span>meme.jpg</span>
+    </button>
+    <button class="desktop-icon" style="--x:1110px;--y:430px" data-name="meme2.jpg" data-x="1110" data-y="430" data-app="meme2">
+      <img class="meme" src="assets/meme2-icon.png" alt=""><span>meme2.jpg</span>
+    </button>
+    <button class="desktop-icon" style="--x:1317px;--y:350px" data-name="сапер" data-x="1317" data-y="350" data-app="minesweeper">
+      <img src="assets/minesweeper.png" alt=""><span>сапер</span>
+    </button>
+    <button class="desktop-icon recycle-bin" style="--x:1317px;--y:595px" data-name="Корзина" data-x="1317" data-y="595" data-app="recycle">
+      <img src="assets/recycle.png" alt=""><span>Корзина</span>
+    </button>
+
+    <section class="window mines-window" id="mines-window" aria-label="Сапёр" hidden>
+      <header class="window-titlebar"><strong>Сапёр</strong><button type="button" class="window-close" aria-label="Закрыть сапёр">×</button></header>
+      <div class="window-menu">
+        <button class="menu-trigger" id="game-menu-trigger" type="button">Игра</button>
+        <button class="menu-trigger" type="button">Помощь</button>
+        <div class="game-menu" id="game-menu" hidden>
+          <button type="button" data-action="new"><span></span><u>Н</u>овая <kbd>F2</kbd></button>
+          <hr>
+          <button type="button" data-level="beginner"><span class="menu-check">✓</span><u>Н</u>овичок</button>
+          <button type="button" data-level="intermediate"><span class="menu-check"></span><u>Л</u>юбитель</button>
+          <button type="button" data-level="expert"><span class="menu-check"></span><u>Э</u>ксперт</button>
+          <button type="button" disabled><span></span><u>О</u>собый...</button>
+        </div>
+      </div>
+      <div class="mine-panel">
+        <div class="mine-counter" id="mine-counter">010</div>
+        <button class="mine-reset" id="mine-reset" type="button" aria-label="Новая игра" data-face="normal">
+          <img class="mine-face mine-face-normal" src="assets/mine-face-normal.png" alt="">
+          <img class="mine-face mine-face-cool" src="assets/mine-face-cool.png" alt="">
+        </button>
+        <div class="mine-counter" id="mine-time">000</div>
+      </div>
+      <div class="mine-board" id="mine-board" aria-label="Игровое поле сапёра"></div>
+    </section>
+
+    <section class="window image-window" id="image-window" aria-label="Просмотр meme.jpg" hidden>
+      <header class="window-titlebar"><strong>meme.jpg</strong><button type="button" class="window-close image-close" aria-label="Закрыть meme.jpg">×</button></header>
+      <nav class="image-menu" aria-label="Меню просмотра">
+        <button type="button">Файл</button><button type="button">Редактировать</button><button type="button">Вид</button><button type="button">Помощь</button>
+      </nav>
+      <div class="image-stage"><img src="assets/meme-full.png" alt="meme.jpg"></div>
+      <div class="image-status">meme.jpg</div>
+    </section>
+
+    <section class="window image-window meme2-window" id="meme2-window" aria-label="Просмотр meme2.jpg" hidden>
+      <header class="window-titlebar"><strong>meme2.jpg</strong><button type="button" class="window-close meme2-close" aria-label="Закрыть meme2.jpg">×</button></header>
+      <nav class="image-menu" aria-label="Меню просмотра meme2.jpg">
+        <button type="button">Файл</button><button type="button">Редактировать</button><button type="button">Вид</button><button type="button">Помощь</button>
+      </nav>
+      <div class="image-stage"><img src="assets/meme2-full.png" alt="meme2.jpg"></div>
+      <div class="image-status">meme2.jpg</div>
+    </section>
+
+    <section class="window folder-window" id="folder-window" aria-label="Папка для свад." hidden>
+      <header class="window-titlebar"><span class="window-title"><img src="assets/task-folder.png" alt=""><strong>для свад.</strong></span><button type="button" class="window-close folder-close" aria-label="Закрыть папку">×</button></header>
+      <nav class="image-menu" aria-label="Меню папки">
+        <button type="button">Файл</button><button type="button">Редактировать</button><button type="button">Вид</button><button type="button">Помощь</button>
+      </nav>
+      <div class="folder-whiteboard" id="folder-whiteboard">
+        <button class="folder-item" type="button" data-folder-name="сайт.pdf" data-url="https://kartunnetwork.github.io/weddingwebsitedoroshin/webweddingdoroshin.pdf"><img src="assets/site-pdf.png" alt=""><span>сайт.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="газета.pdf" data-url="https://kartunnetwork.github.io/wednewspaper/newspaperweddoroshin.pdf"><img src="assets/newspaper-pdf.png" alt=""><span>газета.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="сайт2.pdf" data-url="https://kartunnetwork.github.io/portfolio/weddingzavialovi.pdf"><img src="assets/site2-pdf.png" alt=""><span>сайт2.pdf</span></button>
+      </div>
+      <div class="image-status folder-status" id="folder-status">3 объект(а)</div>
+    </section>
+
+    <section class="window recycle-window" id="recycle-window" aria-label="Корзина" hidden>
+      <header class="window-titlebar"><span class="window-title"><img src="assets/recycle.png" alt=""><strong>Корзина</strong></span><button type="button" class="window-close recycle-close" aria-label="Закрыть корзину">×</button></header>
+      <nav class="image-menu" aria-label="Меню корзины">
+        <button type="button">Файл</button><button type="button">Редактировать</button><button type="button">Вид</button><button type="button">Помощь</button>
+      </nav>
+      <div class="recycle-whiteboard" id="recycle-whiteboard"><p class="recycle-empty">Корзина пуста.</p></div>
+      <div class="image-status recycle-status" id="recycle-status">0 объект(а)</div>
+    </section>
+
+    <section class="window logos-window" id="logos-window" aria-label="Папка logos" hidden>
+      <header class="window-titlebar"><span class="window-title"><img src="assets/task-folder.png" alt=""><strong>logos</strong></span><button type="button" class="window-close logos-close" aria-label="Закрыть папку logos">×</button></header>
+      <nav class="image-menu" aria-label="Меню папки logos">
+        <button type="button">Файл</button><button type="button">Редактировать</button><button type="button">Вид</button><button type="button">Помощь</button>
+      </nav>
+      <div class="folder-whiteboard logos-whiteboard" id="logos-whiteboard">
+        <button class="folder-item" type="button" data-folder-name="tess.pdf" data-url="https://kartunnetwork.github.io/tess_pdf/rebranding_TESS.pdf"><img src="assets/tess-pdf.png" alt=""><span>tess.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="музей.pdf" data-url="https://kartunnetwork.github.io/museum_orlov/logo_museumorlova.pdf"><img src="assets/museum-pdf.png" alt=""><span>музей.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="mint.pdf" data-url="https://kartunnetwork.github.io/portfolio/mint.pdf"><img src="assets/mint-pdf.png" alt=""><span>mint.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="малевич.pdf" data-url="https://kartunnetwork.github.io/portfolio/malevich.pdf"><img src="assets/malevich-pdf.png" alt=""><span>малевич.pdf</span></button>
+      </div>
+      <div class="image-status" id="logos-status">4 объект(а)</div>
+    </section>
+
+    <section class="window misc-window" id="misc-window" aria-label="Папка разное" hidden>
+      <header class="window-titlebar"><span class="window-title"><img src="assets/misc-folder-small.png" alt=""><strong>разное</strong></span><button type="button" class="window-close misc-close" aria-label="Закрыть папку разное">×</button></header>
+      <div class="folder-whiteboard misc-whiteboard" id="misc-whiteboard">
+        <button class="folder-item" type="button" data-folder-name="banner.pdf" data-app="banner-viewer"><img src="assets/newspaper-pdf.png" alt=""><span>banner.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="reels.avi" data-url="https://kartunnetwork.github.io/portfolio/reelsfortonydoroshin.mp4"><img src="assets/reels-avi.png" alt=""><span>reels.avi</span></button>
+        <button class="folder-item" type="button" data-folder-name="guide.pdf" data-url="https://kartunnetwork.github.io/portfolio/guide.pdf"><img src="assets/guide-pdf.png" alt=""><span>guide.pdf</span></button>
+        <button class="folder-item" type="button" data-folder-name="bergbau.pdf" data-url="https://kartunnetwork.github.io/portfolio/bergbaubooklet.pdf"><img src="assets/bergbau-pdf.png" alt=""><span>bergbau.pdf</span></button>
+      </div>
+    </section>
+
+    <section class="window image-window banner-window" id="banner-window" aria-label="Просмотр banner.pdf" hidden>
+      <header class="window-titlebar"><strong>banner.pdf</strong><button type="button" class="window-close banner-close" aria-label="Закрыть banner.pdf">×</button></header>
+      <nav class="image-menu" aria-label="Меню просмотра banner.pdf">
+        <button type="button">Файл</button><button type="button">Редактировать</button><button type="button">Вид</button><button type="button">Помощь</button>
+      </nav>
+      <div class="image-stage"><img src="assets/banner-full.png" alt="banner.pdf"></div>
+      <div class="image-status">banner.pdf</div>
+    </section>
+
+    <div class="context-menu" id="recycle-context" hidden>
+      <button type="button" data-command="open">Открыть</button>
+      <button type="button" data-command="copy">Копировать</button>
+      <hr>
+      <button type="button" data-command="restore">Восстановить</button>
+    </div>
+
+    <div class="context-menu mail-choice-menu" id="mail-choice-menu" hidden>
+      <button type="button" data-mail-action="app">Открыть почтовое приложение</button>
+      <button type="button" data-mail-action="gmail">Открыть Gmail</button>
+      <hr>
+      <button type="button" data-mail-action="copy">Скопировать адрес</button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <footer class="taskbar">
+      <button class="start-button" type="button" aria-label="Пуск">
+        <span class="start-crop"><img src="assets/start.png" alt=""></span><span>Пуск</span>
+      </button>
+      <div class="task-items">
+        <button class="task-item mine-task" id="mine-task" type="button" hidden><img src="assets/minesweeper.png" alt="">Сапёр</button>
+        <button class="task-item meme-task" id="meme-task" type="button" hidden><img src="assets/task-folder.png" alt="">meme.jpg</button>
+        <button class="task-item folder-task" id="folder-task" type="button" hidden><img src="assets/task-folder.png" alt="">для свад.</button>
+        <button class="task-item recycle-task" id="recycle-task" type="button" hidden><img src="assets/recycle.png" alt="">Корзина</button>
+        <button class="task-item logos-task" id="logos-task" type="button" hidden><img src="assets/task-folder.png" alt="">logos</button>
+        <button class="task-item meme2-task" id="meme2-task" type="button" hidden><img src="assets/meme2-task.png" alt="">meme2.jpg</button>
+        <button class="task-item misc-task" id="misc-task" type="button" hidden><img src="assets/misc-task.png" alt="">разное</button>
+        <button class="task-item banner-task" id="banner-task" type="button" hidden><img src="assets/task-folder.png" alt="">banner.pdf</button>
+      </div>
+      <time class="clock" id="clock"></time>
+    </footer>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
