@@ -8,8 +8,15 @@ function finishPreloader() {
   sitePreloader.classList.add('finished');
   window.setTimeout(() => sitePreloader.remove(), 220);
 }
-preloaderFill.addEventListener('animationend', finishPreloader);
-window.setTimeout(finishPreloader, 3300);
+const navigationEntry = performance.getEntriesByType('navigation')[0];
+const isHistoryReturn = navigationEntry?.type === 'back_forward';
+if (isHistoryReturn) {
+  preloaderFinished = true;
+  sitePreloader.remove();
+} else {
+  preloaderFill.addEventListener('animationend', finishPreloader);
+  window.setTimeout(finishPreloader, 3300);
+}
 const icons = [...document.querySelectorAll('.desktop-icon')];
 const didYouKnow = document.querySelector('#did-you-know');
 const didYouKnowFact = document.querySelector('#did-you-know-fact');
@@ -539,13 +546,22 @@ document.querySelector('.folder-close').addEventListener('click', closeWeddingFo
 folderTask.addEventListener('click', () => { folderWindow.hidden = !folderWindow.hidden; });
 function updateFolderStatus() { document.querySelector('#folder-status').textContent = `${folderBoard.children.length} объект(а)`; }
 
+function usesSingleTap(event) {
+  return event?.pointerType === 'touch' || window.matchMedia('(pointer: coarse)').matches;
+}
+function openFolderItem(item) {
+  if (item?.dataset.url) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
+  else if (item?.dataset.app === 'banner-viewer') { showBusyCursor(); openBannerViewer(); }
+}
+
 folderBoard.addEventListener('pointerdown', event => {
   const item = event.target.closest('.folder-item');
   folderBoard.querySelectorAll('.folder-item').forEach(el => el.classList.toggle('selected', el === item));
 });
 folderBoard.addEventListener('dblclick', event => {
+  if (usesSingleTap()) return;
   const item = event.target.closest('.folder-item[data-url]');
-  if (item) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
+  openFolderItem(item);
 });
 folderBoard.querySelectorAll('.folder-item').forEach(item => {
   let itemDrag = null;
@@ -596,7 +612,9 @@ folderBoard.querySelectorAll('.folder-item').forEach(item => {
       const marker = document.createComment('swap');
       item.replaceWith(marker); target.replaceWith(item); marker.replaceWith(target);
     }
+    const wasMoved = itemDrag.moved;
     itemDrag = null;
+    if (!wasMoved && usesSingleTap(event)) openFolderItem(item);
   });
   item.addEventListener('pointercancel', () => {
     item.classList.remove('folder-dragging');
@@ -628,8 +646,9 @@ logosBoard.addEventListener('pointerdown', event => {
   logosBoard.querySelectorAll('.folder-item').forEach(el => el.classList.toggle('selected', el === selected));
 });
 logosBoard.addEventListener('dblclick', event => {
+  if (usesSingleTap()) return;
   const item = event.target.closest('.folder-item[data-url]');
-  if (item) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
+  openFolderItem(item);
 });
 logosBoard.querySelectorAll('.folder-item').forEach(item => {
   let logoDrag = null;
@@ -661,7 +680,9 @@ logosBoard.querySelectorAll('.folder-item').forEach(item => {
     } else if (logoDrag.moved && target && target !== item && target.closest('#logos-whiteboard')) {
       const marker = document.createComment('swap'); item.replaceWith(marker); target.replaceWith(item); marker.replaceWith(target);
     }
+    const wasMoved = logoDrag.moved;
     logoDrag = null;
+    if (!wasMoved && usesSingleTap(event)) openFolderItem(item);
   });
   item.addEventListener('pointercancel', () => { item.classList.remove('folder-dragging'); trash.classList.remove('folder-drop-target'); logoDrag?.ghost?.remove(); logoDrag = null; });
 });
@@ -680,9 +701,9 @@ miscBoard.addEventListener('pointerdown', event => {
   miscBoard.querySelectorAll('.folder-item').forEach(el => el.classList.toggle('selected', el === selected));
 });
 miscBoard.addEventListener('dblclick', event => {
+  if (usesSingleTap()) return;
   const item = event.target.closest('.folder-item');
-  if (item?.dataset.url) { showBusyCursor(); window.open(item.dataset.url, '_blank', 'noopener,noreferrer'); }
-  if (item?.dataset.app === 'banner-viewer') { showBusyCursor(); openBannerViewer(); }
+  openFolderItem(item);
 });
 miscBoard.querySelectorAll('.folder-item').forEach(item => {
   let miscDrag = null;
@@ -714,7 +735,9 @@ miscBoard.querySelectorAll('.folder-item').forEach(item => {
     } else if (miscDrag.moved && target && target !== item && target.closest('#misc-whiteboard')) {
       const marker = document.createComment('swap'); item.replaceWith(marker); target.replaceWith(item); marker.replaceWith(target);
     }
+    const wasMoved = miscDrag.moved;
     miscDrag = null;
+    if (!wasMoved && usesSingleTap(event)) openFolderItem(item);
   });
   item.addEventListener('pointercancel', () => { item.classList.remove('folder-dragging'); trash.classList.remove('folder-drop-target'); miscDrag?.ghost?.remove(); miscDrag = null; });
 });

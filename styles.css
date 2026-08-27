@@ -176,11 +176,21 @@ button, a { font: inherit; }
   background: #808080; box-shadow: inset 2px 2px #000, inset -2px -2px #fff;
 }
 .resume-stage iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+.resume-mobile-pages { display: none; }
 .resume-stage > a {
   position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); padding: 4px 8px;
-  color: #000080; background: #ffffdf; font-size: 11px; white-space: nowrap;
+  color: #000080; background: #ffffdf; font-size: 11px; white-space: nowrap; opacity: 0; pointer-events: none;
 }
-.resume-stage iframe:not([src=""]) + a { opacity: 0; pointer-events: none; }
+@media (max-width: 900px), (pointer: coarse) {
+  .resume-stage .resume-desktop-pdf { display: none; }
+  .resume-mobile-pages {
+    display: flex; width: 100%; height: 100%; padding: 4px; flex-direction: column; gap: 5px;
+    overflow-x: hidden; overflow-y: auto; background: #808080; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch; touch-action: pan-y;
+  }
+  .resume-mobile-pages img { display: block; width: 100%; height: auto; flex: none; background: #fff; }
+  .resume-stage > a { display: none; }
+}
 .folder-window { width: min(350px, calc(100vw - 12px)); height: min(260px, calc(100dvh - 44px)); }
 .folder-whiteboard { height: calc(100% - 66px); min-height: 80px; margin: 2px 4px; padding: 12px 14px; display: grid; grid-template-columns: repeat(auto-fill, 60px); grid-auto-rows: 60px; align-content: start; justify-content: start; gap: 8px 12px; overflow: auto; background: #fff; box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #c1c1c1, inset 2px 2px #000; }
 .folder-item { width: 60px; height: 60px; padding: 2px; border: 0; outline: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; background: transparent; color: #000; cursor: default; touch-action: none; }
