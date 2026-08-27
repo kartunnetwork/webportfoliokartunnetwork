@@ -421,6 +421,7 @@ button, a { font: inherit; }
   width: 74px; height: 74px; object-fit: contain; image-rendering: auto;
   transform-origin: 50% 75%; transition: filter .15s ease;
 }
+.welcome-skills img:last-child:nth-child(3n + 1) { grid-column: 2; }
 .welcome-skills img:hover { animation: skill-wiggle .48s ease-in-out infinite; filter: brightness(1.08); }
 @keyframes skill-wiggle {
   0%, 100% { transform: rotate(0deg); }
