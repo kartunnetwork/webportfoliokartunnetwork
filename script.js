@@ -351,6 +351,7 @@ let marqueeState = null;
 desktop.addEventListener('pointerdown', event => {
   if (event.target !== desktop || event.button !== 0 || event.pointerType === 'touch') return;
   event.preventDefault();
+  if (!selectionMarquee.isConnected) desktop.append(selectionMarquee);
   const desktopRect = desktop.getBoundingClientRect();
   const startX = Math.max(0, Math.min(desktop.clientWidth, event.clientX - desktopRect.left));
   const startY = Math.max(0, Math.min(desktop.clientHeight - taskbarHeight(), event.clientY - desktopRect.top));
@@ -380,6 +381,8 @@ function stopMarquee(event) {
   if (!marqueeState || event.pointerId !== marqueeState.pointerId) return;
   marqueeState = null;
   selectionMarquee.classList.remove('active');
+  selectionMarquee.remove();
+  selectionMarquee.removeAttribute('style');
 }
 desktop.addEventListener('pointerup', stopMarquee);
 desktop.addEventListener('pointercancel', stopMarquee);
